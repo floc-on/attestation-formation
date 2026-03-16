@@ -51,67 +51,64 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script>
-    async function imageToDataUrl(path) {
-      const response = await fetch(path);
-      if (!response.ok) {
-        throw new Error("Impossible de charger l'image de fond : " + path);
-      }
+<script>
+  async function imageToDataUrl(path) {
+    const response = await fetch(path);
+    if (!response.ok) {
+      throw new Error("Impossible de charger l'image : " + path);
+    }
+    const blob = await response.blob();
 
-      const blob = await response.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
 
-      return await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
+  document.getElementById("generateBtn").addEventListener("click", async () => {
+    const nom = prompt("Entrez votre nom et prénom :");
+    if (!nom || !nom.trim()) {
+      alert("Le nom et prénom sont requis.");
+      return;
     }
 
-    document.getElementById("generateBtn").addEventListener("click", async () => {
-      const nom = prompt("Entrez votre nom et prénom :");
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4"
+      });
 
-      if (!nom || !nom.trim()) {
-        alert("Le nom et prénom sont requis.");
-        return;
-      }
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
 
-      try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({
-          orientation: "landscape",
-          unit: "mm",
-          format: "a4"
-        });
+      const background = await imageToDataUrl("certificat.png");
+      doc.addImage(background, "PNG", 0, 0, pageWidth, pageHeight);
 
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
+      // Nom
+      doc.setFont("times", "normal");
+      doc.setFontSize(24);
+      doc.text(nom.trim(), pageWidth / 2, 82, { align: "center" });
 
-        const background = await imageToDataUrl("certificat.png");
+      // Zone cliquable de test
+      const xLien = 44;
+      const yLien = 112;
+      const largeurLien = 208;
+      const hauteurLien = 38;
 
-        doc.addImage(background, "PNG", 0, 0, pageWidth, pageHeight);
+      doc.link(xLien, yLien, largeurLien, hauteurLien, {
+        url: "https://www.ptsd.va.gov/professional/assessment/adult-int/caps.asp"
+      });
 
-        doc.setFont("times", "normal");
-        doc.setFontSize(24);
-
-        const xCentre = pageWidth / 2;
-
-        /* 
-          Ajuste seulement cette ligne si le nom est trop haut ou trop bas.
-          0.44 = 44% de la hauteur de page
-        */
-        const yNom = pageHeight * 0.30;
-
-        doc.text(nom.trim(), xCentre, yNom, { align: "center" });
-
-        const nomFichier = "certificat-" + nom.trim().replace(/\s+/g, "_") + ".pdf";
-        doc.save(nomFichier);
-
-      } catch (error) {
-        console.error(error);
-        alert("Le PDF n'a pas pu être généré. Vérifiez que le fichier certificat.png est bien présent dans le repository.");
-      }
-    });
-  </script>
+      doc.save("certificat-" + nom.trim().replace(/\s+/g, "_") + ".pdf");
+    } catch (error) {
+      console.error(error);
+      alert("Le PDF n'a pas pu être généré.");
+    }
+  });
+</script>
 </body>
 </html>
