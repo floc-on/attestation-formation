@@ -1,95 +1,117 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>Certificat CAPS</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Générateur de certificat</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f2f2f2;
+      font-family: Arial, sans-serif;
+    }
 
-<style>
-body{
-    margin:0;
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:#f2f2f2;
-    font-family: Arial, sans-serif;
-}
+    .box {
+      text-align: center;
+      background: #ffffff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    }
 
-.certificate{
-    position:relative;
-    width:1000px;
-    height:700px;
-    background:url("certificat.png") no-repeat center;
-    background-size:contain;
-}
+    h1 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
 
-.name{
-    position:absolute;
-    top:360px;   /* ← on ajustera ensemble */
-    left:50%;
-    transform:translateX(-50%);
-    font-size:36px;
-    font-family:"Times New Roman", serif;
-}
+    button {
+      padding: 12px 22px;
+      font-size: 16px;
+      border: none;
+      background: #5f007f;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
 
-button{
-    position:absolute;
-    bottom:-80px;
-    left:50%;
-    transform:translateX(-50%);
-    padding:12px 22px;
-    font-size:16px;
-    border:none;
-    background:#5f007f;
-    color:white;
-    border-radius:8px;
-    cursor:pointer;
-}
-</style>
+    button:hover {
+      background: #4a0063;
+    }
+  </style>
 </head>
-
 <body>
+  <div class="box">
+    <h1>Générer mon certificat</h1>
+    <button id="generateBtn">Télécharger le certificat</button>
+  </div>
 
-<div class="certificate">
-    <div id="studentName" class="name"></div>
-    <button onclick="generate()">Générer mon certificat</button>
-</div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    async function imageToDataUrl(path) {
+      const response = await fetch(path);
+      if (!response.ok) {
+        throw new Error("Impossible de charger l'image de fond : " + path);
+      }
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script>
-function generate(){
+      const blob = await response.blob();
 
-    const nom = prompt("Entrez votre nom et prénom");
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
 
-    if(!nom || nom.trim()===""){
-        alert("Nom requis");
+    document.getElementById("generateBtn").addEventListener("click", async () => {
+      const nom = prompt("Entrez votre nom et prénom :");
+
+      if (!nom || !nom.trim()) {
+        alert("Le nom et prénom sont requis.");
         return;
-    }
+      }
 
-    document.getElementById("studentName").innerText = nom;
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+          orientation: "landscape",
+          unit: "mm",
+          format: "a4"
+        });
 
-    const { jsPDF } = window.jspdf;
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
 
-    const doc = new jsPDF("landscape","mm","a4");
+        const background = await imageToDataUrl("certificat.png");
 
-    const img = new Image();
-    img.src = "certificat.png";
+        doc.addImage(background, "PNG", 0, 0, pageWidth, pageHeight);
 
-    img.onload = function(){
+        doc.setFont("times", "normal");
+        doc.setFontSize(24);
 
-        doc.addImage(img, "SVG", 0, 0, 297, 210);
+        const xCentre = pageWidth / 2;
 
-        doc.setFont("times","normal");
-        doc.setFontSize(22);
+        /* 
+          Ajuste seulement cette ligne si le nom est trop haut ou trop bas.
+          0.44 = 44% de la hauteur de page
+        */
+        const yNom = pageHeight * 0.44;
 
-        doc.text(nom, 148.5, 92, {align:"center"}); 
-        /* ← position du nom dans le PDF
-           on ajustera ensemble */
+        doc.text(nom.trim(), xCentre, yNom, { align: "center" });
 
-        doc.save("certificat.pdf");
-    }
-}
-</script>
+        const nomFichier = "certificat-" + nom.trim().replace(/\s+/g, "_") + ".pdf";
+        doc.save(nomFichier);
 
+      } catch (error) {
+        console.error(error);
+        alert("Le PDF n'a pas pu être généré. Vérifiez que le fichier certificat.png est bien présent dans le repository.");
+      }
+    });
+  </script>
 </body>
 </html>
