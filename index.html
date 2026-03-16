@@ -1,158 +1,95 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Attestation</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      text-align: center;
-      padding: 60px 20px;
-    }
+<meta charset="UTF-8">
+<title>Certificat CAPS</title>
 
-    .box {
-      background: white;
-      max-width: 700px;
-      margin: auto;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    }
+<style>
+body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#f2f2f2;
+    font-family: Arial, sans-serif;
+}
 
-    button {
-      background: #1f4e79;
-      color: white;
-      border: none;
-      padding: 12px 22px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-    }
+.certificate{
+    position:relative;
+    width:1000px;
+    height:700px;
+    background:url("certificat.svg") no-repeat center;
+    background-size:contain;
+}
 
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
-      justify-content: center;
-      align-items: center;
-    }
+.name{
+    position:absolute;
+    top:360px;   /* ← on ajustera ensemble */
+    left:50%;
+    transform:translateX(-50%);
+    font-size:36px;
+    font-family:"Times New Roman", serif;
+}
 
-    .modal-content {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 400px;
-      text-align: left;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 15px 0 20px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-sizing: border-box;
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-    }
-
-    .secondary {
-      background: #777;
-    }
-  </style>
+button{
+    position:absolute;
+    bottom:-80px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:12px 22px;
+    font-size:16px;
+    border:none;
+    background:#5f007f;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
+}
+</style>
 </head>
+
 <body>
-  <div class="box">
-    <h1>Attestation de suivi</h1>
-    <p>Cliquez sur le bouton pour générer votre attestation personnalisée.</p>
-    <button id="openModal">Générer mon attestation</button>
-  </div>
 
-  <div class="modal" id="modal">
-    <div class="modal-content">
-      <h2>Vos informations</h2>
-      <label for="nomPrenom">Nom et prénom</label>
-      <input type="text" id="nomPrenom" placeholder="Ex. Camille Dupont">
+<div class="certificate">
+    <div id="studentName" class="name"></div>
+    <button onclick="generate()">Générer mon certificat</button>
+</div>
 
-      <div class="actions">
-        <button class="secondary" id="closeModal">Annuler</button>
-        <button id="confirmGenerate">Télécharger le PDF</button>
-      </div>
-    </div>
-  </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+function generate(){
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script>
-    const modal = document.getElementById("modal");
-    const openModal = document.getElementById("openModal");
-    const closeModal = document.getElementById("closeModal");
-    const confirmGenerate = document.getElementById("confirmGenerate");
-    const input = document.getElementById("nomPrenom");
+    const nom = prompt("Entrez votre nom et prénom");
 
-    openModal.addEventListener("click", () => {
-      modal.style.display = "flex";
-      input.value = "";
-      input.focus();
-    });
-
-    closeModal.addEventListener("click", () => {
-      modal.style.display = "none";
-    });
-
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) {
-        modal.style.display = "none";
-      }
-    });
-
-    confirmGenerate.addEventListener("click", () => {
-      const nomPrenom = input.value.trim();
-
-      if (!nomPrenom) {
-        alert("Merci de saisir votre nom et prénom.");
+    if(!nom || nom.trim()===""){
+        alert("Nom requis");
         return;
-      }
+    }
 
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF("landscape", "mm", "a4");
-      const dateDuJour = new Date().toLocaleDateString("fr-FR");
+    document.getElementById("studentName").innerText = nom;
 
-      doc.rect(15, 15, 267, 180);
+    const { jsPDF } = window.jspdf;
 
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
-      doc.text("ATTESTATION DE SUIVI", 148, 40, { align: "center" });
+    const doc = new jsPDF("landscape","mm","a4");
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(14);
-      doc.text("Nous attestons que", 148, 70, { align: "center" });
+    const img = new Image();
+    img.src = "certificat.svg";
 
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(20);
-      doc.text(nomPrenom, 148, 90, { align: "center" });
+    img.onload = function(){
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(14);
-      doc.text("a suivi le parcours de formation.", 148, 110, { align: "center" });
-      doc.text("Document généré automatiquement.", 148, 125, { align: "center" });
+        doc.addImage(img, "SVG", 0, 0, 297, 210);
 
-      doc.setFontSize(12);
-      doc.text("Date : " + dateDuJour, 30, 180);
-      doc.text("Signature / Organisme", 220, 180);
+        doc.setFont("times","normal");
+        doc.setFontSize(22);
 
-      const nomFichier = "attestation-" + nomPrenom.replace(/\s+/g, "_") + ".pdf";
-      doc.save(nomFichier);
+        doc.text(nom, 148.5, 92, {align:"center"}); 
+        /* ← position du nom dans le PDF
+           on ajustera ensemble */
 
-      modal.style.display = "none";
-    });
-  </script>
+        doc.save("certificat.pdf");
+    }
+}
+</script>
+
 </body>
 </html>
