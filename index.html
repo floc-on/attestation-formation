@@ -19,7 +19,7 @@ body{
     position:relative;
     width:1000px;
     height:700px;
-    background:url("certificat.svg") no-repeat center;
+    background:url("certificat.png") no-repeat center;
     background-size:contain;
 }
 
@@ -73,7 +73,7 @@ function generate(){
     const doc = new jsPDF("landscape","mm","a4");
 
     const img = new Image();
-    img.src = "certificat.svg";
+    img.src = "certificat.png";
 
     img.onload = function(){
 
